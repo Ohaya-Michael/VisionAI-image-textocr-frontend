@@ -1,7 +1,6 @@
-# Project Name
+# VisionAI Image & Text OCR — Frontend
 
-> A React + TypeScript application for image classification, OCR extraction, and batch processing — built with Vite.
-
+> A React frontend for uploading images, running AI-powered classification, and displaying prediction results with confidence scoring.
 
 ---
 
@@ -13,9 +12,9 @@
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-  - [Environment Variables](#environment-variables)
   - [Running the App](#running-the-app)
 - [Components](#components)
+- [Utilities](#utilities)
 - [Tech Stack](#tech-stack)
 - [Contributing](#contributing)
 - [License](#license)
@@ -24,50 +23,42 @@
 
 ## Overview
 
-Brief description of what this project does and who it's for.
+VisionAI Frontend is a React-based single-page application that lets users upload images and receive real-time AI classification and OCR predictions. Results are presented visually with confidence bars and a detailed results panel.
 
-![App screenshot](src/public/Screenshot 2026-04-02 203611.png)
+![App Screenshot](public/Screenshot%202026-04-02%20203611.png)
 
 ---
 
 ## Features
 
-- **Image Classification** — Classify images using a connected AI model or API
-- **OCR Extraction** — Extract text from images and documents
-- **Batch Processing** — Process multiple files or requests in bulk
-- **Analytics** — View usage stats and processing history
-- **API Management** — Configure and manage API keys and endpoints
-- **Dashboard** — Centralized view of all activity and system status
+- **Image Upload** — Drag-and-drop or click-to-upload interface
+- **Prediction Results** — Visual confidence bars for each prediction class
+- **Result Panel** — Detailed breakdown of classification or OCR output
+- **Toast Notifications** — User feedback for upload status and errors
+- **Confidence Scoring** — Utility-driven confidence formatting and thresholding
 
 ---
 
 ## Project Structure
 
 ```
+├── public/
+│   └── index.html                 # HTML entry point
 ├── src/
 │   ├── components/
-│   │   ├── About.tsx              # About page
-│   │   ├── Analytics.tsx          # Analytics dashboard
-│   │   ├── APIManagement.tsx      # API key & endpoint management
-│   │   ├── BatchProcessing.tsx    # Bulk file/request processing
-│   │   ├── Dashboard.tsx          # Main dashboard view
-│   │   ├── ImageClassification.tsx# Image classification interface
-│   │   ├── Layout.tsx             # App-wide layout wrapper
-│   │   ├── OCRExtraction.tsx      # OCR text extraction interface
-│   │   └── Settings.tsx           # App settings
-│   ├── lib/
-│   │   └── utils.ts               # Shared utility functions
-│   ├── public/                    # Static assets
-│   ├── App.tsx                    # Root component & routing
-│   ├── main.tsx                   # App entry point
-│   ├── index.css                  # Global styles
-│   └── types.ts                   # Shared TypeScript types
-├── .env.example                   # Environment variable template
-├── index.html                     # HTML entry point
-├── metadata.json                  # Project metadata
-├── package.json
-├── tsconfig.json
-└── vite.config.ts
+│   │   ├── Header.jsx             # App header and navigation
+│   │   ├── PredictionBar.jsx      # Confidence bar for each prediction
+│   │   ├── ResultPanel.jsx        # Full results display panel
+│   │   ├── Toast.jsx              # Toast notification component
+│   │   └── UploadZone.jsx         # Image upload / drag-and-drop area
+│   ├── utils/
+│   │   └── confidenceUtils.js     # Confidence score helpers & formatting
+│   ├── App.css                    # Global app styles
+│   ├── App.jsx                    # Root component & layout
+│   └── index.js                   # App entry point
+├── .gitignore
+├── package-lock.json
+└── package.json
 ```
 
 ---
@@ -82,32 +73,19 @@ Brief description of what this project does and who it's for.
 ### Installation
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
+git clone https://github.com/your-username/visionai-image-textocr.git
+cd visionai-image-textocr
 npm install
 ```
-
-### Environment Variables
-
-Copy the example file and fill in your values:
-
-```bash
-cp .env.example .env
-```
-
-See `.env.example` for all required variables.
 
 ### Running the App
 
 ```bash
-# Development
-npm run dev
+# Development server
+npm start
 
 # Production build
 npm run build
-
-# Preview production build
-npm run preview
 ```
 
 ---
@@ -116,28 +94,33 @@ npm run preview
 
 | Component | Description |
 |---|---|
-| `Dashboard` | Overview of system activity and status |
-| `ImageClassification` | Upload and classify images |
-| `OCRExtraction` | Extract text from images/documents |
-| `BatchProcessing` | Process multiple items at once |
-| `Analytics` | Usage statistics and history |
-| `APIManagement` | Manage API keys and configurations |
-| `Settings` | App preferences and configuration |
-| `Layout` | Shared navigation and page structure |
+| `Header` | Top navigation bar and app branding |
+| `UploadZone` | Drag-and-drop or file picker for image input |
+| `PredictionBar` | Renders a labeled confidence bar for a single prediction class |
+| `ResultPanel` | Aggregates and displays the full set of classification/OCR results |
+| `Toast` | Ephemeral notifications for upload success, errors, or warnings |
+
+---
+
+## Utilities
+
+| File | Description |
+|---|---|
+| `confidenceUtils.js` | Helper functions for formatting confidence percentages, applying thresholds, and sorting prediction results |
 
 ---
 
 ## Tech Stack
 
 - [React](https://react.dev/) — UI framework
-- [TypeScript](https://www.typescriptlang.org/) — Type safety
-- [Vite](https://vitejs.dev/) — Build tool and dev server
+- [JavaScript (JSX)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) — Component language
+- [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS) — Styling via `App.css`
 
 ---
 
 ## Contributing
 
-1. Fork the repo
+1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/my-feature`)
 3. Commit your changes (`git commit -m 'Add my feature'`)
 4. Push to the branch (`git push origin feature/my-feature`)
