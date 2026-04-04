@@ -29,7 +29,7 @@ interface LayoutProps {
 
 const navItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
-  { id: 'about', label: 'About', icon: 'Info' },
+  { id: 'about', label: 'About Page', icon: 'Info' },
   { id: 'ocr', label: 'OCR Extraction', icon: 'Scan' },
   { id: 'batch', label: 'Batch Processing', icon: 'Layers' },
   { id: 'classification', label: 'Image Classification', icon: 'ImageIcon' },

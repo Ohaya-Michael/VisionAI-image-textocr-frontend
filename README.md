@@ -25,7 +25,7 @@
 
 VisionAI Frontend is a React-based single-page application that lets users upload images and receive real-time AI classification and OCR predictions. Results are presented visually with confidence bars and a detailed results panel.
 
-![App Screenshot](public/Screenshot.png)
+![App Screenshot](public/screenshot.png)
 
 ---
 

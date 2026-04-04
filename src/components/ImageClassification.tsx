@@ -51,7 +51,7 @@ export default function ImageClassification() {
 
     const interval = setInterval(() => {
       setProgress(prev => {
-        if (prev >= 100) {
+        if (prev >= 300) {
           clearInterval(interval);
           setIsProcessing(false);
           setResults(mockResults);
@@ -224,7 +224,7 @@ export default function ImageClassification() {
               <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex items-start gap-3">
                 <CheckCircle2 className="size-5 text-emerald-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 leading-relaxed">
-                  VisionAI is highly confident that this image contains a <strong>{results[0].className}</strong>. The analysis was completed using the latest ResNet-101 architecture.
+                  VisionAI is highly confident that this image contains a <strong>{results[0].className}</strong>. The analysis was completed using the latest fine-tuned CNN Model architecture.
                 </p>
               </div>
             </div>
