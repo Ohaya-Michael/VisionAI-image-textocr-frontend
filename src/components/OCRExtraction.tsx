@@ -11,14 +11,40 @@ import {
   Loader2 
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import api from "@/src/api/client";
 
 export default function OCRExtraction() {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFileSize, setSelectedFileSize] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
   const startProcessing = () => {
+    if (!selectedFile) return;
     setIsProcessing(true);
     setProgress(0);
+
+    // build form data for multipart upload
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    // api.post('/api/convert_pdf/', formData, {
+    //   headers: { 'Content-Type': 'multipart/form-data' }
+    // })
+    // .then(response => {
+    //   const data = response.data;
+    //   setIsResult(data);
+    //   setIsProcessing(false);
+    //   console.log('Check if processing is done:', isProcessing);
+    // })
+    // .catch((err) => {
+    //   console.error('upload error', err.response || err);
+    //   setError(
+    //     err.response?.data?.detail ||
+    //     "Could not connect to the API. Is the backend running?"
+    //   );
+    //   setIsProcessing(false);
+    // });
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
@@ -28,6 +54,21 @@ export default function OCRExtraction() {
         return prev + 2;
       });
     }, 50);
+    console.log('Started processing document:', selectedFile);
+  };
+
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // You can add file validation here (e.g., type, size)
+      setSelectedFile(file);
+      setSelectedFileSize((file.size / (1024 * 1024)).toFixed(2) + ' MB');
+      setIsProcessing(true);
+      setProgress(0);
+      console.log('Selected file:', file);
+      // For this mockup, we won't do anything with the file
+    }
   };
 
   const mockJson = `{
@@ -70,28 +111,78 @@ export default function OCRExtraction() {
           <p className="text-slate-500 dark:text-slate-400">Upload resumes, CVs, or invoices to convert them into structured data using advanced VisionAI models.</p>
         </div>
 
-        <div className="flex flex-col items-center gap-6 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-6 py-16 text-center hover:border-primary/50 transition-colors group cursor-pointer">
-          <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-            <CloudUpload className="size-8" />
+        <div className="relative group">
+          <input 
+            type="file" 
+            // Updated to accept PDF, Word, and Excel files
+            accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
+            onChange={handleFileUpload} // Ensure your handler name matches
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          />
+          <div className={cn(
+            "flex flex-col items-center gap-6 rounded-2xl border-2 border-dashed px-6 py-16 text-center transition-all duration-200",
+            selectedFile // Renamed from selectedImage for clarity
+              ? "border-primary/50 bg-primary/5" 
+              : "border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 hover:border-primary/50"
+          )}>
+            {selectedFile ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="size-20 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-lg border-2 border-primary/20">
+                  {/* Changed icon to FileText for a document feel */}
+                  <FileText className="size-10" />
+                </div>
+                <div className="max-w-[200px] truncate">
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {selectedFile.name} {/* Assuming selectedFile is the File object */}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <CloudUpload className="size-8" />
+              </div>
+            )}
+            <div className="space-y-1">
+              <p className="text-lg font-bold tracking-tight">
+                {selectedFile ? 'Document selected' : 'Drag and drop your document here'}
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Supported formats: PDF, DOCX, XLSX (Max 10MB)
+              </p>
+            </div>
+            {!selectedFile && (
+              <button className="flex items-center justify-center rounded-xl h-11 px-6 bg-slate-200 dark:bg-slate-800 font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+                Select File
+              </button>
+            )}
+            {selectedFile && (
+              <button className="flex items-center justify-center rounded-xl h-11 px-6 bg-slate-200 dark:bg-slate-800 font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+                Change File
+              </button>
+            )}
           </div>
-          <div className="space-y-1">
-            <p className="text-lg font-bold tracking-tight">Drag and drop your files here</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Supported formats: PDF, PNG, JPG (Max 25MB)</p>
-          </div>
-          <button className="flex items-center justify-center rounded-xl h-11 px-6 bg-slate-200 dark:bg-slate-800 font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
-            Select Document
-          </button>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-end gap-3">
-          <button 
-            onClick={startProcessing}
-            disabled={isProcessing}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl h-12 px-8 bg-primary text-white font-bold hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 disabled:opacity-50"
-          >
-            <Bolt className="size-4 fill-white" />
-            Process Document
-          </button>
+          {selectedFile && (
+            <button 
+              onClick={startProcessing}
+              disabled={!isProcessing}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl h-12 px-8 bg-primary text-white font-bold hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 disabled:opacity-50"
+            >
+              <Bolt className="size-4 fill-white" />
+              Process Document
+            </button>
+          ) }
+          {/* {selectedFile && (
+            <button 
+              disabled={!isProcessing}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl h-12 px-8 bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold transition-opacity"
+            >
+              <Loader2 className="size-4 animate-spin" />
+              Processing...
+            </button>
+          )} */}
         </div>
       </section>
 
@@ -122,8 +213,8 @@ export default function OCRExtraction() {
                 <FileText className="size-5 text-slate-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold truncate">resume_john_doe_v2.pdf</p>
-                <p className="text-xs text-slate-500">1.2 MB • {progress < 100 ? 'Extracting entities...' : 'Analysis complete'}</p>
+                <p className="text-sm font-bold truncate">{selectedFile.name}</p>
+                <p className="text-xs text-slate-500">{selectedFileSize} • {progress < 100 ? 'Extracting entities...' : 'Analysis complete'}</p>
               </div>
               <div className="text-right self-end sm:self-auto">
                 <p className={cn("text-sm font-black", progress < 100 ? "text-primary" : "text-emerald-500")}>
