@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { motion } from 'motion/react';
 import { 
   CloudUpload, 
@@ -12,10 +12,42 @@ import {
   FolderOpen,
   ChevronDown,
   Copy,
-  Download
+  Download,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { ProcessingFile } from '@/src/types';
+
+export default function BatchProcessing() {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    
+    if (file) {
+      // Überprüfung auf den MIME-Type oder die Dateiendung für ZIP
+      const isZip = file.type === 'application/zip' || 
+                    file.type === 'application/x-zip-compressed' || 
+                    file.name.endsWith('.zip');
+
+      if (!isZip) {
+        alert('Please upload a valid .zip file');
+        e.target.value = ''; // Input zurücksetzen
+        return;
+      }
+
+      // Beispiel für Größenvalidierung (z.B. max 50MB)
+      const maxSize = 50 * 1024 * 1024; 
+      if (file.size > maxSize) {
+        alert('File is too large. Max size is 50MB.');
+        return;
+      }
+
+      console.log('Selected ZIP file:', file.name, `${(file.size / 1024 / 1024).toFixed(2)} MB`);
+      setSelectedFile(file);
+    }
+  };
+
 
 const mockFiles: ProcessingFile[] = [
   { id: '1', name: 'resume_john_doe_v2.pdf', size: '1.2 MB', progress: 100, status: 'completed' },
@@ -23,26 +55,59 @@ const mockFiles: ProcessingFile[] = [
   { id: '3', name: 'tax_return_2023_draft.pdf', size: '4.1 MB', progress: 0, status: 'queued' },
 ];
 
-export default function BatchProcessing() {
-  return (
-    <div className="max-w-5xl mx-auto space-y-10">
+return (
+  <div className="max-w-5xl mx-auto space-y-10">
       <section className="space-y-6">
         <div className="space-y-1">
           <h1 className="text-3xl font-black tracking-tight">Batch Text Extraction</h1>
           <p className="text-slate-500 dark:text-slate-400">Upload multiple resumes, CVs, or invoices simultaneously for high-volume automated processing.</p>
         </div>
 
-        <div className="flex flex-col items-center gap-6 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-6 py-16 text-center hover:border-primary/50 transition-colors group cursor-pointer">
-          <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-            <CloudUpload className="size-8" />
+        <div className="relative group">
+          <input 
+            type="file" 
+            // Akzeptiert .zip sowie die gängigen MIME-Types für ZIP-Archive
+             accept=".zip,application/zip,application/x-zip-compressed" 
+             onChange={handleFileUpload} // Ensure your handler name matches
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          />
+          <div className={cn(
+            "flex flex-col items-center gap-6 rounded-2xl border-2 border-dashed px-6 py-16 text-center transition-all duration-200",
+            selectedFile // Renamed from selectedImage for clarity
+              ? "border-primary/50 bg-primary/5" 
+              : "border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 hover:border-primary/50"
+          )}>
+            {selectedFile ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="size-20 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-lg border-2 border-primary/20">
+                  {/* Changed icon to FileText for a document feel */}
+                  <FileText className="size-10" />
+                </div>
+                <div className="max-w-[200px] truncate">
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {selectedFile.name} {/* Assuming selectedFile is the File object */}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <CloudUpload className="size-8" />
+              </div>
+            )}
+            <div className="space-y-1">
+              <p className="text-lg font-bold tracking-tight">
+                {selectedFile ? 'Document selected' : 'Drag and drop your document here'}
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Supported formats: PDF, DOCX, XLSX (Max 10MB)
+              </p>
+            </div>
+            {!selectedFile && (
+              <button className="flex items-center justify-center rounded-xl h-11 px-6 bg-slate-200 dark:bg-slate-800 font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+                Select File
+              </button>
+            )}
           </div>
-          <div className="space-y-1">
-            <p className="text-lg font-bold tracking-tight">Drag and drop multiple files here</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Upload multiple resumes, CVs, or invoices simultaneously for high-volume automated processing.</p>
-          </div>
-          <button className="flex items-center justify-center rounded-xl h-11 px-6 bg-slate-200 dark:bg-slate-800 font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
-            Select Documents
-          </button>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-end gap-3">
