@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   CloudUpload, 
@@ -8,39 +8,75 @@ import {
   Loader2,
   BarChart
 } from 'lucide-react';
+import api from '@/src/api/client';
 import { cn } from '@/src/lib/utils';
+import { JSONViewer } from './JSONViewer';
+import { ProcessingPeriod } from '../ui/ProcessingPeriod';
+import { pre } from 'motion/react-client';
 
 interface ClassificationResult {
   className: string;
   probability: number;
 }
 
-const mockResults: ClassificationResult[] = [
-  { className: 'Golden Retriever', probability: 0.92 },
-  { className: 'Labrador Retriever', probability: 0.05 },
-  { className: 'Chesapeake Bay Retriever', probability: 0.02 },
-  { className: 'Flat-Coated Retriever', probability: 0.005 },
-  { className: 'English Setter', probability: 0.005 },
-];
+// const mockResults: ClassificationResult[] = [
+//   { className: 'Golden Retriever', probability: 0.92 },
+//   { className: 'Labrador Retriever', probability: 0.05 },
+//   { className: 'Chesapeake Bay Retriever', probability: 0.02 },
+//   { className: 'Flat-Coated Retriever', probability: 0.005 },
+//   { className: 'English Setter', probability: 0.005 },
+// ];
 
 export default function ImageClassification() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [results, setResults] = useState<ClassificationResult[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isImgResult, setIsImgResult] = useState<any>(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (file) {
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => {
+  //       setSelectedImage(reader.result as string);
+  //       setResults(null);
+  //       setProgress(0);
+  //     };
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
+
+  const transformData = (data: Record<string, string>): ClassificationResult[] => {
+  return Object.entries(data)
+    .map(([key, value]) => ({
+      // Capitalize the first letter (optional, looks better in UI)
+      className: key.charAt(0).toUpperCase() + key.slice(1),
+      // Remove '%' and convert to decimal (e.g., 0.4778)
+      probability: parseFloat(value.replace('%', '')) / 100
+    }))
+    // Sort by highest probability first
+    .sort((a, b) => b.probability - a.probability);
+};
+
+  const handleImageUpload_v1 = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
+        setSelectedImage({
+          file: file,
+          preview: reader.result as string
+        });
         setResults(null);
         setProgress(0);
+        setError(null);
       };
       reader.readAsDataURL(file);
     }
-  };
+  }
 
   const startClassification = () => {
     if (!selectedImage) return;
@@ -48,6 +84,29 @@ export default function ImageClassification() {
     setIsProcessing(true);
     setProgress(0);
     setResults(null);
+
+    // build form data for multipart upload
+    const formData = new FormData();
+    formData.append('file', selectedImage.file);
+
+    api.post('/api/predict_image/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    .then(response => {
+      const data = response.data;
+      const prediction = JSON.parse(data.prediction);
+      setIsImgResult(prediction);
+      setIsAnalyzing(false);
+      console.log('Result from API:', prediction);
+    })
+    .catch((err) => {
+      console.error('upload error', err.response || err);
+      setError(
+        err.response?.data?.detail ||
+        "Could not connect to the API. Is the backend running?"
+      );
+      setIsAnalyzing(false);
+    });
 
     const interval = setInterval(() => {
       setProgress(prev => {
@@ -62,6 +121,8 @@ export default function ImageClassification() {
     }, 100);
   };
 
+  const mockResults: ClassificationResult[] = transformData(isImgResult || {});
+
   return (
     <div className="max-w-5xl mx-auto space-y-10">
       <section className="space-y-6">
@@ -74,7 +135,7 @@ export default function ImageClassification() {
           <input 
             type="file" 
             accept="image/*" 
-            onChange={handleImageUpload}
+            onChange={handleImageUpload_v1}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
           <div className={cn(
@@ -86,7 +147,7 @@ export default function ImageClassification() {
             {selectedImage ? (
               <div className="relative w-48 h-48 rounded-xl overflow-hidden shadow-xl border-4 border-white dark:border-slate-800">
                 <img 
-                  src={selectedImage} 
+                  src={selectedImage ? selectedImage.preview : ''} 
                   alt="Selected" 
                   className="w-full h-full object-cover"
                 />
@@ -178,7 +239,7 @@ export default function ImageClassification() {
               </h3>
               <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl aspect-square bg-slate-100 dark:bg-slate-900">
                 <img 
-                  src={selectedImage!} 
+                  src={selectedImage?.preview} 
                   alt="Analyzed" 
                   className="w-full h-full object-cover"
                 />
@@ -224,7 +285,7 @@ export default function ImageClassification() {
               <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex items-start gap-3">
                 <CheckCircle2 className="size-5 text-emerald-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 leading-relaxed">
-                  VisionAI is highly confident that this image contains a <strong>{results[0].className}</strong>. The analysis was completed using the latest fine-tuned CNN Model architecture.
+                  VisionAI is highly confident that this image contains a <strong>{results[0]?.className}</strong>. The analysis was completed using the latest fine-tuned CNN Model architecture.
                 </p>
               </div>
             </div>
