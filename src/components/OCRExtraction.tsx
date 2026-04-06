@@ -12,64 +12,16 @@ import {
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import api from "@/src/api/client";
+import {JSONViewer} from './JSONViewer';
+import { ProcessingPeriod } from '../ui/ProcessingPeriod';
 
 export default function OCRExtraction() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFileSize, setSelectedFileSize] = useState<string | null>(null);
+  const [isResult, setIsResult] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-
-  const startProcessing = () => {
-    if (!selectedFile) return;
-    setIsProcessing(true);
-    setProgress(0);
-
-    // build form data for multipart upload
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
-    // api.post('/api/convert_pdf/', formData, {
-    //   headers: { 'Content-Type': 'multipart/form-data' }
-    // })
-    // .then(response => {
-    //   const data = response.data;
-    //   setIsResult(data);
-    //   setIsProcessing(false);
-    //   console.log('Check if processing is done:', isProcessing);
-    // })
-    // .catch((err) => {
-    //   console.error('upload error', err.response || err);
-    //   setError(
-    //     err.response?.data?.detail ||
-    //     "Could not connect to the API. Is the backend running?"
-    //   );
-    //   setIsProcessing(false);
-    // });
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 2;
-      });
-    }, 50);
-    console.log('Started processing document:', selectedFile);
-  };
-
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // You can add file validation here (e.g., type, size)
-      setSelectedFile(file);
-      setSelectedFileSize((file.size / (1024 * 1024)).toFixed(2) + ' MB');
-      setIsProcessing(true);
-      setProgress(0);
-      console.log('Selected file:', file);
-      // For this mockup, we won't do anything with the file
-    }
-  };
 
   const mockJson = `{
   "document_type": "Curriculum Vitae",
@@ -102,6 +54,69 @@ export default function OCRExtraction() {
     "engine_version": "v2.4-vision"
   }
 }`;
+
+  // Start processing the uploaded document
+  const startProcessing = () => {
+    if (!selectedFile) return;
+    setIsProcessing(true);
+    setProgress(0);
+
+    // build form data for multipart upload
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    api.post('/api/convert_pdf/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    .then(response => {
+      const data = response.data;
+      setIsResult(data);
+      setIsProcessing(false);
+      console.log('Check if processing is done:', isProcessing);
+      console.log('Received response:', data);
+    })
+    .catch((err) => {
+      console.error('upload error', err.response || err);
+      setError(
+        err.response?.data?.detail ||
+        "Could not connect to the API. Is the backend running?"
+      );
+      setIsProcessing(false);
+    });
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 2;
+      });
+    }, 50);
+    console.log('Started processing document:', selectedFile);
+  };
+
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // You can add file validation here (e.g., type, size)
+      setSelectedFile(file);
+      setSelectedFileSize((file.size / (1024 * 1024)).toFixed(2) + ' MB');
+      setIsProcessing(true);
+      setIsResult(null);
+      setProgress(0);
+      console.log('Selected file:', file);
+      // For this mockup, we won't do anything with the file
+    }
+  };
+
+
+const renderContent = () => {
+  if (isResult) return <JSONViewer data={isResult} type={true} />;
+  if (isResult && isProcessing===false) return <ProcessingPeriod />;
+  if (isProcessing) return <ProcessingPeriod />;
+  return <JSONViewer data={mockJson} type={false} />;
+};
 
   return (
     <div className="max-w-5xl mx-auto space-y-10">
@@ -239,7 +254,7 @@ export default function OCRExtraction() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h3 className="text-lg font-bold flex items-center gap-2">
               <Code className="size-5 text-primary" />
               Result (Structured JSON)
@@ -276,7 +291,8 @@ export default function OCRExtraction() {
                 return <div key={i}>{line}</div>;
               })}
             </pre>
-          </div>
+          </div> */}
+          {progress === 100 && renderContent()}
         </motion.section>
       )}
     </div>
