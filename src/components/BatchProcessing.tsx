@@ -35,7 +35,7 @@ export default function BatchProcessing() {
         e.target.value = ''; // Input zurücksetzen
         return;
       }
-
+ 
       // Beispiel für Größenvalidierung (z.B. max 50MB)
       const maxSize = 50 * 1024 * 1024; 
       if (file.size > maxSize) {
@@ -99,7 +99,7 @@ return (
                 {selectedFile ? 'Document selected' : 'Drag and drop your document here'}
               </p>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Supported formats: PDF, DOCX, XLSX (Max 10MB)
+                Supported formats: ZIPPED PDF, DOCX, XLSX (Max 10MB)
               </p>
             </div>
             {!selectedFile && (
